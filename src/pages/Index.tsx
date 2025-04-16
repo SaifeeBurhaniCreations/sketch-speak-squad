@@ -13,6 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { HelpCircle, Users, Volume2, VolumeX } from "lucide-react";
+import { LoadingModal } from "@/components/LoadingModal";
+import { WordSelectionModal } from "@/components/WordSelectionModal";
+import { WaitingForArtistModal } from "@/components/WaitingForArtistModal";
+import { ExitGameModal } from "@/components/ExitGameModal";
+import { VirtualKeyboard } from "@/components/VirtualKeyboard";
 
 // Sample data
 const SAMPLE_PLAYERS = [
@@ -32,6 +37,14 @@ const SAMPLE_WORDS = [
   "ninja", "pirate", "cowboy", "superhero", "mermaid", "fairy"
 ];
 
+type GameState = 
+  | "lobby" 
+  | "loading" 
+  | "waiting-for-artist" 
+  | "selecting-word" 
+  | "playing" 
+  | "round-end";
+
 const Index = () => {
   const { toast } = useToast();
   const [username, setUsername] = useState("YourUsername");
@@ -46,22 +59,26 @@ const Index = () => {
   const [correctGuesser, setCorrectGuesser] = useState("");
   const [pointsAwarded, setPointsAwarded] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [gameStarted, setGameStarted] = useState(false);
+  const [gameState, setGameState] = useState<GameState>("lobby");
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [lastTimeoutToast, setLastTimeoutToast] = useState<Date | null>(null);
+
+  // Get the current drawer's name
+  const currentDrawer = players.find((p) => p.isDrawer)?.username || "";
 
   // Simulate getting three random words when it's your turn to draw
   useEffect(() => {
-    if (isDrawer) {
+    if (gameState === "selecting-word" && isDrawer) {
       // Shuffle and get 3 random words
       const shuffled = [...SAMPLE_WORDS].sort(() => 0.5 - Math.random());
       setSuggestedWords(shuffled.slice(0, 3));
-      setShowWordSelection(true);
     }
-  }, [isDrawer]);
+  }, [gameState, isDrawer]);
 
   const handleWordSelection = (word: string) => {
     setCurrentWord(word);
-    setShowWordSelection(false);
+    setGameState("playing");
     
     toast({
       title: "Word Selected",
@@ -72,7 +89,7 @@ const Index = () => {
 
   const handleGuess = (guess: string) => {
     // Simulate guess checking
-    if (guess.toLowerCase().trim() === currentWord.toLowerCase()) {
+    if (guess.toLowerCase().trim() === currentWord.toLowerCase() && !isDrawer) {
       // Correct guess!
       setCorrectGuesser(username);
       setPointsAwarded(100);
@@ -88,37 +105,51 @@ const Index = () => {
             : player
         )
       );
+    } else {
+      // Display the guess in the chat
     }
   };
 
   const handleTimeUp = () => {
-    toast({
-      title: "Time's Up!",
-      description: `The word was "${currentWord}". Next round starting soon!`,
-      variant: "destructive",
-    });
+    // Only show toast if it's been more than 5 seconds since the last one
+    const now = new Date();
+    if (!lastTimeoutToast || (now.getTime() - lastTimeoutToast.getTime()) > 5000) {
+      toast({
+        title: "Time's Up!",
+        description: `The word was "${currentWord}". Next round starting soon!`,
+        variant: "destructive",
+      });
+      setLastTimeoutToast(now);
+    }
     
     // Simulate starting next round
     setTimeout(() => {
       setRoundNumber((prev) => Math.min(prev + 1, totalRounds));
       
       // Rotate drawer role 
-      if (!isDrawer) {
-        setIsDrawer(true);
+      const nextDrawerIndex = Math.floor(Math.random() * players.length);
+      const nextDrawer = players[nextDrawerIndex].username;
+      
+      setPlayers((prevPlayers) =>
+        prevPlayers.map((player, index) => ({
+          ...player,
+          isDrawer: index === nextDrawerIndex
+        }))
+      );
+      
+      setIsDrawer(nextDrawer === username);
+      
+      if (nextDrawer === username) {
+        setGameState("selecting-word");
       } else {
-        setIsDrawer(false);
+        setGameState("waiting-for-artist");
       }
     }, 3000);
   };
 
   const handleStartGame = (name: string) => {
     setUsername(name);
-    setGameStarted(true);
-    
-    toast({
-      title: "Welcome to the game!",
-      description: "Get ready to draw and guess with friends!",
-    });
+    setGameState("loading");
     
     // Update current player name in players list
     setPlayers((prevPlayers) =>
@@ -126,9 +157,70 @@ const Index = () => {
         player.isCurrentPlayer ? { ...player, username: name } : player
       )
     );
+    
+    // Simulate loading and then transition to game
+    setTimeout(() => {
+      const randomDrawerIndex = Math.floor(Math.random() * players.length);
+      const randomDrawer = players[randomDrawerIndex].username;
+      
+      setPlayers((prevPlayers) =>
+        prevPlayers.map((player, index) => ({
+          ...player,
+          isDrawer: index === randomDrawerIndex
+        }))
+      );
+      
+      setIsDrawer(randomDrawer === name);
+      
+      if (randomDrawer === name) {
+        setGameState("selecting-word");
+      } else {
+        setGameState("waiting-for-artist");
+      }
+    }, 3000);
+  };
+  
+  const handleExitGame = () => {
+    setShowExitModal(true);
+  };
+  
+  const handleSwitchRole = () => {
+    setIsDrawer(!isDrawer);
+    
+    // Update players array to reflect role change
+    setPlayers((prevPlayers) =>
+      prevPlayers.map((player) => ({
+        ...player,
+        isDrawer: player.isCurrentPlayer ? !isDrawer : false
+      }))
+    );
+    
+    if (!isDrawer) {
+      setGameState("selecting-word");
+    } else {
+      setGameState("waiting-for-artist");
+    }
+    
+    toast({
+      title: "Role Switched",
+      description: `You are now a ${!isDrawer ? "drawer" : "guesser"}.`,
+    });
+  };
+  
+  const handleQuitGame = () => {
+    setGameState("lobby");
+    setRoundNumber(1);
+    setCurrentWord("");
+    // Reset other game state as needed
+    
+    toast({
+      title: "Game Ended",
+      description: "You've left the game. Join a new one when ready!",
+    });
   };
 
-  if (!gameStarted) {
+  // Render different components based on game state
+  if (gameState === "lobby") {
     return <GameLobby onStartGame={handleStartGame} />;
   }
 
@@ -230,7 +322,7 @@ const Index = () => {
           isDrawer={isDrawer}
           roundNumber={roundNumber}
           totalRounds={totalRounds}
-          currentDrawer={players.find((p) => p.isDrawer)?.username || ""}
+          currentDrawer={currentDrawer}
           timeLimit={90}
           onTimeUp={handleTimeUp}
         />
@@ -238,24 +330,23 @@ const Index = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-3 space-y-4">
             <div className="relative">
-              <DrawingCanvas isDrawer={isDrawer} />
-              
-              {/* Word suggestion popup */}
-              {showWordSelection && (
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                  <WordSuggestion
-                    words={suggestedWords}
-                    onSelectWord={handleWordSelection}
-                    visible={showWordSelection}
-                  />
-                </div>
-              )}
+              <DrawingCanvas 
+                isDrawer={isDrawer} 
+                onExit={handleExitGame}
+              />
               
               {/* Emoji reactions */}
               <div className="absolute bottom-4 right-4">
                 <EmojiReactions />
               </div>
             </div>
+            
+            {!isDrawer && (
+              <VirtualKeyboard 
+                onSubmit={handleGuess} 
+                disabled={gameState !== "playing"}
+              />
+            )}
           </div>
           
           <div className={`lg:col-span-1 space-y-4 ${isMobileMenuOpen ? '' : 'hidden lg:block'}`}>
@@ -267,10 +358,42 @@ const Index = () => {
                 correctWord={currentWord}
               />
             </div>
-            <Leaderboard players={players} />
+            {isDrawer && <Leaderboard players={players} />}
           </div>
         </div>
       </div>
+      
+      {/* Modals */}
+      <LoadingModal 
+        open={gameState === "loading"} 
+        onFinishLoading={() => {
+          if (isDrawer) {
+            setGameState("selecting-word");
+          } else {
+            setGameState("waiting-for-artist");
+          }
+        }} 
+      />
+      
+      <WordSelectionModal 
+        open={gameState === "selecting-word" && isDrawer} 
+        words={suggestedWords} 
+        onSelectWord={handleWordSelection}
+        artistName={username}
+      />
+      
+      <WaitingForArtistModal 
+        open={gameState === "waiting-for-artist" && !isDrawer} 
+        artistName={currentDrawer}
+      />
+      
+      <ExitGameModal 
+        open={showExitModal}
+        onClose={() => setShowExitModal(false)}
+        onQuit={handleQuitGame}
+        onSwitchRole={handleSwitchRole}
+        currentRole={isDrawer ? "drawer" : "guesser"}
+      />
       
       <CorrectGuessModal
         open={showCorrectGuessModal}

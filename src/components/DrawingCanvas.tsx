@@ -1,11 +1,12 @@
 
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Eraser, Square, Circle, PaintBucket, Undo, Undo2 } from "lucide-react";
+import { Eraser, Square, Circle, PaintBucket, Undo, Undo2, Mic, X } from "lucide-react";
 
 interface DrawingCanvasProps {
   isDrawer: boolean;
   onDraw?: (data: any) => void;
+  onExit?: () => void;
 }
 
 const COLORS = [
@@ -25,7 +26,7 @@ const COLORS = [
 
 const BRUSH_SIZES = [2, 5, 10, 15];
 
-export function DrawingCanvas({ isDrawer = false }: DrawingCanvasProps) {
+export function DrawingCanvas({ isDrawer = false, onDraw, onExit }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
   const [drawing, setDrawing] = useState(false);
@@ -34,6 +35,7 @@ export function DrawingCanvas({ isDrawer = false }: DrawingCanvasProps) {
   const [tool, setTool] = useState<"brush" | "eraser" | "fill">("brush");
   const [history, setHistory] = useState<ImageData[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [isMicActive, setIsMicActive] = useState(false);
 
   // Initialize canvas
   useEffect(() => {
@@ -161,9 +163,34 @@ export function DrawingCanvas({ isDrawer = false }: DrawingCanvasProps) {
     setHistoryIndex(newHistory.length - 1);
   };
 
+  const toggleMic = () => {
+    setIsMicActive(!isMicActive);
+    // Here you would implement actual microphone functionality
+  };
+
   return (
     <div className="flex flex-col bg-white rounded-xl overflow-hidden shadow-lg">
       <div className="relative border-b border-gray-200">
+        {/* Top control buttons */}
+        <div className="absolute top-2 right-2 flex space-x-2 z-10">
+          <Button
+            variant="outline"
+            size="icon"
+            className={`rounded-full ${isMicActive ? 'bg-game-green text-white' : 'bg-white'}`}
+            onClick={toggleMic}
+          >
+            <Mic className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full bg-white text-red-500 hover:bg-red-50 hover:text-red-600"
+            onClick={onExit}
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+
         <canvas
           ref={canvasRef}
           width={800}

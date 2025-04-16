@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+
+@layer base {
+  html {
+    font-family: 'Fredoka', sans-serif;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -49,6 +57,21 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Game specific colors */
+    --game-blue: 210 100% 60%;
+    --game-dark-blue: 210 77% 50%;
+    --game-light-blue: 199 100% 75%;
+    --game-yellow: 50 100% 50%;
+    --game-orange: 30 100% 59%;
+    --game-green: 122 39% 49%;
+    --game-pink: 328 100% 69%;
+    --game-purple: 259 76% 74%;
+    --game-light-purple: 266 77% 87%;
+    --game-soft-pink: 350 100% 94%;
+    --game-soft-blue: 213 92% 91%;
+    --game-soft-gray: 252 47% 94%;
+    --game-dark-gray: 0 0% 13%;
   }
 
   .dark {

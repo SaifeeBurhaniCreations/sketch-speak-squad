@@ -176,14 +176,6 @@ export function DrawingCanvas({ isDrawer = false, onDraw, onExit }: DrawingCanva
           <Button
             variant="outline"
             size="icon"
-            className={`rounded-full ${isMicActive ? 'bg-game-green text-white' : 'bg-white'}`}
-            onClick={toggleMic}
-          >
-            <Mic className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
             className="rounded-full bg-white text-red-500 hover:bg-red-50 hover:text-red-600"
             onClick={onExit}
           >
@@ -193,7 +185,7 @@ export function DrawingCanvas({ isDrawer = false, onDraw, onExit }: DrawingCanva
 
         <canvas
           ref={canvasRef}
-          width={800}
+          width={1000}
           height={500}
           className="bg-white cursor-crosshair"
           onMouseDown={startDrawing}

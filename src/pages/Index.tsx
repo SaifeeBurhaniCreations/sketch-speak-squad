@@ -64,6 +64,8 @@ const Index = () => {
   const [showExitModal, setShowExitModal] = useState(false);
   const [lastTimeoutToast, setLastTimeoutToast] = useState<Date | null>(null);
 
+  const [showWaitingForArtistModal, setShowWaitingForArtistModal] = useState(false);
+
   // Get the current drawer's name
   const currentDrawer = players.find((p) => p.isDrawer)?.username || "";
 
@@ -76,6 +78,18 @@ const Index = () => {
     }
   }, [gameState, isDrawer]);
 
+  useEffect(() => {
+    if (gameState === "waiting-for-artist") {
+      // Show the modal when the game state is "waiting-for-artist"
+      setShowWaitingForArtistModal(true);
+  
+      const timer = setTimeout(() => {
+        setShowWaitingForArtistModal(false);
+      }, 2000);
+  
+      return () => clearTimeout(timer);
+    }
+  }, [gameState])
   const handleWordSelection = (word: string) => {
     setCurrentWord(word);
     setGameState("playing");
@@ -131,11 +145,19 @@ const Index = () => {
       const nextDrawer = players[nextDrawerIndex].username;
       
       setPlayers((prevPlayers) =>
-        prevPlayers.map((player, index) => ({
-          ...player,
-          isDrawer: index === nextDrawerIndex
-        }))
+        prevPlayers.map((player, index) => {
+          const isDrawer = index === nextDrawerIndex;
+      
+          if (isDrawer) {
+            const { isCurrentPlayer, ...rest } = player;
+            return { ...rest, isDrawer: true };
+          } else {
+            const { isDrawer, ...rest } = player;
+            return { ...rest };
+          }
+        })
       );
+      
       
       setIsDrawer(nextDrawer === username);
       
@@ -164,10 +186,17 @@ const Index = () => {
       const randomDrawer = players[randomDrawerIndex].username;
       
       setPlayers((prevPlayers) =>
-        prevPlayers.map((player, index) => ({
-          ...player,
-          isDrawer: index === randomDrawerIndex
-        }))
+        prevPlayers.map((player, index) => {
+          const isDrawer = index === randomDrawerIndex;
+      
+          if (isDrawer) {
+            const { isCurrentPlayer, ...rest } = player;
+            return { ...rest, isDrawer: true };
+          } else {
+            const { isDrawer, ...rest } = player;
+            return { ...rest };
+          }
+        })
       );
       
       setIsDrawer(randomDrawer === name);
@@ -382,10 +411,12 @@ const Index = () => {
         artistName={username}
       />
       
-      <WaitingForArtistModal 
+      {/* <WaitingForArtistModal 
         open={gameState === "waiting-for-artist" && !isDrawer} 
         artistName={currentDrawer}
-      />
+      /> */}
+
+{showWaitingForArtistModal && <WaitingForArtistModal open={true} artistName={currentDrawer} />}
       
       <ExitGameModal 
         open={showExitModal}

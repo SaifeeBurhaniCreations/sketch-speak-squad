@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Backspace, Send } from "lucide-react";
+import { Eraser, Send } from "lucide-react";
 
 interface VirtualKeyboardProps {
   onSubmit: (guess: string) => void;
@@ -56,7 +56,7 @@ export function VirtualKeyboard({ onSubmit, disabled = false }: VirtualKeyboardP
           onClick={handleBackspace}
           disabled={disabled || !input}
         >
-          <Backspace className="h-5 w-5" />
+          <Eraser className="h-5 w-5" />
         </Button>
         <Button 
           className="bg-game-green hover:bg-game-green/90 mr-1 rounded-l-none h-full"
@@ -100,7 +100,7 @@ export function VirtualKeyboard({ onSubmit, disabled = false }: VirtualKeyboardP
                 onClick={handleBackspace}
                 disabled={disabled || !input}
               >
-                <Backspace className="h-5 w-5" />
+                <Eraser className="h-5 w-5" />
               </Button>
             )}
           </div>

@@ -2,6 +2,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Eraser, Square, Circle, PaintBucket, Undo, Undo2, Mic, X } from "lucide-react";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 
 interface DrawingCanvasProps {
   isDrawer: boolean;
@@ -36,6 +37,7 @@ export function DrawingCanvas({ isDrawer = false, onDraw, onExit }: DrawingCanva
   const [history, setHistory] = useState<ImageData[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [isMicActive, setIsMicActive] = useState(false);
+  const { play } = useSoundEffects();
 
   // Initialize canvas
   useEffect(() => {
@@ -84,6 +86,21 @@ export function DrawingCanvas({ isDrawer = false, onDraw, onExit }: DrawingCanva
     return () => window.removeEventListener("resize", handleResize);
   }, [ctx]);
 
+  // Set cursor style based on role and tool
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    
+    if (isDrawer) {
+      if (tool === "eraser") {
+        canvasRef.current.style.cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" /></svg>') 12 12, auto`;
+      } else {
+        canvasRef.current.style.cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><circle cx="12" cy="12" r="6" /></svg>') 12 12, crosshair`;
+      }
+    } else {
+      canvasRef.current.style.cursor = "default";
+    }
+  }, [isDrawer, tool]);
+
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawer || !ctx || !canvasRef.current) return;
     
@@ -100,6 +117,9 @@ export function DrawingCanvas({ isDrawer = false, onDraw, onExit }: DrawingCanva
       ctx.lineWidth = brushSize;
       ctx.lineCap = "round";
     }
+    
+    // Play sound when starting to draw
+    play('buttonClick');
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -138,6 +158,7 @@ export function DrawingCanvas({ isDrawer = false, onDraw, onExit }: DrawingCanva
     const newIndex = historyIndex - 1;
     ctx.putImageData(history[newIndex], 0, 0);
     setHistoryIndex(newIndex);
+    play('buttonClick');
   };
 
   const handleRedo = () => {
@@ -146,6 +167,7 @@ export function DrawingCanvas({ isDrawer = false, onDraw, onExit }: DrawingCanva
     const newIndex = historyIndex + 1;
     ctx.putImageData(history[newIndex], 0, 0);
     setHistoryIndex(newIndex);
+    play('buttonClick');
   };
 
   const handleClearCanvas = () => {
@@ -161,10 +183,12 @@ export function DrawingCanvas({ isDrawer = false, onDraw, onExit }: DrawingCanva
     
     setHistory(newHistory);
     setHistoryIndex(newHistory.length - 1);
+    play('buttonClick');
   };
 
   const toggleMic = () => {
     setIsMicActive(!isMicActive);
+    play('buttonClick');
     // Here you would implement actual microphone functionality
   };
 
@@ -173,11 +197,26 @@ export function DrawingCanvas({ isDrawer = false, onDraw, onExit }: DrawingCanva
       <div className="relative border-b border-gray-200">
         {/* Top control buttons */}
         <div className="absolute top-2 right-2 flex space-x-2 z-10">
+          {isDrawer && (
+            <Button
+              variant="outline"
+              size="icon"
+              className={`rounded-full bg-white ${isMicActive ? 'text-game-green' : 'text-gray-500'} hover:bg-gray-50`}
+              onClick={toggleMic}
+            >
+              <Mic className="h-5 w-5" />
+            </Button>
+          )}
           <Button
             variant="outline"
             size="icon"
             className="rounded-full bg-white text-red-500 hover:bg-red-50 hover:text-red-600"
-            onClick={onExit}
+            onClick={() => {
+              if (onExit) {
+                onExit();
+                play('buttonClick');
+              }
+            }}
           >
             <X className="h-5 w-5" />
           </Button>
@@ -187,7 +226,7 @@ export function DrawingCanvas({ isDrawer = false, onDraw, onExit }: DrawingCanva
           ref={canvasRef}
           width={1000}
           height={500}
-          className="bg-white cursor-crosshair"
+          className={`bg-white ${isDrawer ? 'cursor-crosshair' : 'cursor-default'}`}
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}
@@ -209,6 +248,7 @@ export function DrawingCanvas({ isDrawer = false, onDraw, onExit }: DrawingCanva
                   onClick={() => {
                     setColor(clr);
                     setTool("brush");
+                    play('buttonClick');
                   }}
                 />
               ))}
@@ -219,7 +259,10 @@ export function DrawingCanvas({ isDrawer = false, onDraw, onExit }: DrawingCanva
                 variant="outline"
                 size="icon"
                 className={`bg-white ${tool === "eraser" ? "ring-2 ring-game-yellow" : ""}`}
-                onClick={() => setTool("eraser")}
+                onClick={() => {
+                  setTool("eraser");
+                  play('buttonClick');
+                }}
               >
                 <Eraser className="h-5 w-5" />
               </Button>
@@ -256,7 +299,10 @@ export function DrawingCanvas({ isDrawer = false, onDraw, onExit }: DrawingCanva
                 className={`w-8 h-8 rounded-full bg-white flex items-center justify-center ${
                   brushSize === size ? "ring-2 ring-game-yellow" : ""
                 }`}
-                onClick={() => setBrushSize(size)}
+                onClick={() => {
+                  setBrushSize(size);
+                  play('buttonClick');
+                }}
               >
                 <div
                   className="rounded-full bg-black"

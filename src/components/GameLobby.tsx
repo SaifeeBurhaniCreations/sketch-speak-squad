@@ -24,7 +24,7 @@ export function GameLobby({ onStartGame }: GameLobbyProps) {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-game-softBlue to-game-lightBlue relative overflow-hidden p-4">
+    <div className="flex flex-col min-h-screen items-center justify-center bg-gradient-to-br from-game-softBlue to-game-lightBlue relative overflow-hidden p-4 gap-4">
       {/* Background X-patterns */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         {Array.from({ length: 20 }).map((_, i) => (
@@ -42,7 +42,7 @@ export function GameLobby({ onStartGame }: GameLobbyProps) {
         ))}
       </div>
       
-      <div className="text-center mb-8 absolute top-10 left-0 right-0">
+      <div className="text-center mb-12">
         <h1 className="text-6xl font-bold text-white drop-shadow-lg flex items-center justify-center">
           Sketch
           <span className="text-game-yellow mx-2">Speak</span>
@@ -103,7 +103,7 @@ export function GameLobby({ onStartGame }: GameLobbyProps) {
         </CardFooter>
       </Card>
       
-      <div className="absolute bottom-4 left-0 right-0 text-center text-white/70 text-sm">
+      <div className="text-center text-white/70 text-sm">
         © 2025 Sketch Speak Squad • A fun multiplayer drawing and guessing game
       </div>
     </div>

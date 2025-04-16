@@ -32,7 +32,7 @@ export function Leaderboard({ players }: LeaderboardProps) {
               key={player.id}
               className={`flex justify-between items-center p-2 rounded-lg ${
                 player.isCurrentPlayer 
-                  ? "bg-game-yellow/20 border border-game-yellow" 
+                  ? "bg-game-yellow/20 text-white border border-game-yellow" 
                   : "bg-white"
               }`}
             >

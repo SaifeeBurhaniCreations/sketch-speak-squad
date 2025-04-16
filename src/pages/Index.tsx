@@ -102,7 +102,7 @@ const Index = () => {
     setTimeout(() => {
       setRoundNumber((prev) => Math.min(prev + 1, totalRounds));
       
-      // Rotate drawer role for demonstration
+      // Rotate drawer role 
       if (!isDrawer) {
         setIsDrawer(true);
       } else {
@@ -133,7 +133,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-game-softBlue to-game-lightBlue relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-game-softBlue to-game-lightBlue relative overflow-hidden pb-12">
       {/* Background X-patterns */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         {Array.from({ length: 20 }).map((_, i) => (
@@ -259,7 +259,6 @@ const Index = () => {
           </div>
           
           <div className={`lg:col-span-1 space-y-4 ${isMobileMenuOpen ? '' : 'hidden lg:block'}`}>
-            <Leaderboard players={players} />
             <div className="h-[calc(100%-280px)] min-h-[300px]">
               <ChatBox
                 username={username}
@@ -268,6 +267,7 @@ const Index = () => {
                 correctWord={currentWord}
               />
             </div>
+            <Leaderboard players={players} />
           </div>
         </div>
       </div>
